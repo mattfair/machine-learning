@@ -69,15 +69,7 @@ class DQNAgent:
         self.q_eval.load_checkpoint()
         self.q_next.load_checkpoint()
 
-    def learn(self):
-        if self.memory.mem_counter < self.batch_size:
-            return
-
-        self.q_eval.optimizer.zero_grad()
-        self.replace_target_network()
-
-        states, actions, rewards, states_, dones = self.sample_memory()
-
+    def calculate_loss(self, states, actions, rewards, states_, dones):
         indices = np.arange(self.batch_size)
         q_pred = self.q_eval.forward(states)[indices, actions]
         q_next = self.q_next.forward(states_).max(dim=1)[0]
@@ -86,7 +78,41 @@ class DQNAgent:
         q_target = rewards + self.gamma*q_next
 
         loss = self.q_eval.loss(q_target, q_pred).to(self.q_eval.device)
+        return loss
+
+    def learn(self):
+        if self.memory.mem_counter < self.batch_size:
+            return
+
+        self.q_eval.optimizer.zero_grad()
+        self.replace_target_network()
+
+        states, actions, rewards, states_, dones = self.sample_memory()
+        loss = self.calculate_loss(states, actions, rewards, states_, dones)
         loss.backward()
+
         self.q_eval.optimizer.step()
         self.learn_step_counter += 1
         self.decrement_epsilon()
+
+class DDQNAgent(DQNAgent):
+    def __init__(self, gamma, epsilon, lr, n_actions, input_dims, mem_size, batch_size,
+                 eps_min=0.01, eps_dec=5e-7, replace=1000, algo=None, env_name=None,
+                 checkpoint_dir='tmp/dqn'):
+        super(DDQNAgent, self).__init__(gamma, epsilon, lr, n_actions, input_dims, mem_size,
+                                        batch_size, eps_min, eps_dec, replace, algo, env_name,
+                                        checkpoint_dir)
+
+    def calculate_loss(self, states, actions, rewards, states_, dones):
+        indices = np.arange(self.batch_size)
+        q_pred = self.q_eval.forward(states)[indices, actions]
+        q_next = self.q_next.forward(states_)
+        q_eval = self.q_eval.forward(states_)
+
+        max_actions = T.argmax(q_eval, dim=1)
+
+        q_next[dones] = 0.0
+        q_target = rewards + self.gamma*q_next[indices, max_actions]
+
+        loss = self.q_eval.loss(q_target, q_pred).to(self.q_eval.device)
+        return loss

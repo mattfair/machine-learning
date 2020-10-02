@@ -1,10 +1,6 @@
-try:
-    import matplotlib.pyplot as plt
-except:
-    import matplotlib as mpl
-    mpl.use('Agg')
-    import matplotlib.pyplot as plt
-
+import matplotlib as mpl
+mpl.use('Agg')
+import matplotlib.pyplot as plt
 import numpy as np
 from wrapper import RepeatActionAndMaxFrame, PreprocessFrame, StackFrames
 import gym
