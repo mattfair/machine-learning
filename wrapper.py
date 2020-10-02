@@ -67,9 +67,9 @@ class PreprocessFrame(gym.ObservationWrapper):
         new_obs = new_obs / 255
         return new_obs
 
-class StackFrame(gym.ObservationWrapper):
+class StackFrames(gym.ObservationWrapper):
     def __init__(self, env, repeat):
-        super(StackFrame, self).__init__(env)
+        super(StackFrames, self).__init__(env)
         self.observation_space = Box(env.observation_space.low.repeat(repeat, axis=0),
                                      env.observation_space.high.repeat(repeat, axis=0),
                                      dtype=np.float32)

@@ -1,6 +1,12 @@
-import matplotlib.pyplot as plt
+try:
+    import matplotlib.pyplot as plt
+except:
+    import matplotlib as mpl
+    mpl.use('Agg')
+    import matplotlib.pyplot as plt
+
 import numpy as np
-from wrapper import RepeatActionAndMaxFrame, PreprocessFrame, StackFrame
+from wrapper import RepeatActionAndMaxFrame, PreprocessFrame, StackFrames
 import gym
 
 def plot_learning_curve(x, scores, epsilons, filename):
@@ -32,6 +38,6 @@ def make_env(env_name, shape=(84,84,1), repeat=4, clip_reward=False, no_ops=Fals
     env = gym.make(env_name)
     env = RepeatActionAndMaxFrame(env, repeat, clip_reward, no_ops, fire_first)
     env = PreprocessFrame(shape, env)
-    env = StackFrame(env, repeat)
+    env = StackFrames(env, repeat)
 
     return env

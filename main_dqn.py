@@ -34,7 +34,9 @@ if __name__ == '__main__':
     figure_file = 'plots/{}.png'.format(fname)
 
     n_steps = 0
-    scores = eps_hist = steps_array = []
+    scores = []
+    eps_hist = []
+    steps_array = []
 
     for i in range(n_games):
         done = False
@@ -47,7 +49,7 @@ if __name__ == '__main__':
             score += reward
 
             if not load_checkpoint:
-                agent.store_transition(observation, action, reward, observation_, int(done))
+                agent.store_transition(observation, action, reward, observation_, done)
                 agent.learn()
 
             observation = observation_

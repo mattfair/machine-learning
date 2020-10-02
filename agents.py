@@ -52,20 +52,20 @@ class DQNAgent:
         states_ = T.tensor(new_state).to(self.q_eval.device)
         dones = T.tensor(done).to(self.q_eval.device)
 
-        return states, actions, rewards, states_, done
+        return states, actions, rewards, states_, dones
 
     def replace_target_network(self):
         if self.learn_step_counter % self.replace_target_cnt == 0:
             self.q_next.load_state_dict(self.q_eval.state_dict())
 
     def decrement_epsilon(self):
-        self.epsilon = self.epsilon*self.eps_dec if self.epsilon>self.eps_min else self.eps_min
+        self.epsilon = self.epsilon-self.eps_dec if self.epsilon>self.eps_min else self.eps_min
 
-    def save_model(self):
+    def save_models(self):
         self.q_eval.save_checkpoint()
         self.q_next.save_checkpoint()
 
-    def load_model(self):
+    def load_models(self):
         self.q_eval.load_checkpoint()
         self.q_next.load_checkpoint()
 
@@ -76,10 +76,10 @@ class DQNAgent:
         self.q_eval.optimizer.zero_grad()
         self.replace_target_network()
 
-        states, action, rewards, states_, dones = self.sample_memory()
+        states, actions, rewards, states_, dones = self.sample_memory()
 
         indices = np.arange(self.batch_size)
-        q_pred = self.q_eval.forward(states)[indices, action]
+        q_pred = self.q_eval.forward(states)[indices, actions]
         q_next = self.q_next.forward(states_).max(dim=1)[0]
 
         q_next[dones] = 0.0
