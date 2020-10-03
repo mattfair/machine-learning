@@ -1,4 +1,4 @@
-from agents import DDQNAgent
+from agents import DoubleDQNAgent
 from util import make_env
 from main import run
 
@@ -8,9 +8,9 @@ if __name__ == '__main__':
 
     # setting mem_size to 20k to run on machine with 8 GB, increase to higher for machines with more
     # memory
-    agent = DDQNAgent(gamma=0.99, epsilon=1.0, lr=0.0001, input_dims=(env.observation_space.shape),
-                      n_actions=env.action_space.n, mem_size=20000, eps_min=0.1, batch_size=32,
-                      replace=1000, eps_dec=1e-5, checkpoint_dir='models/', algo='DDQNAgent',
-                      env_name=env_name)
+    agent = DoubleDQNAgent(gamma=0.99, epsilon=1.0, lr=0.0001, input_dims=(env.observation_space.shape),
+                           n_actions=env.action_space.n, mem_size=20000, eps_min=0.1, batch_size=32,
+                           replace=1000, eps_dec=1e-5, checkpoint_dir='models/', algo='DDQNAgent',
+                           env_name=env_name)
 
     run(env, agent)

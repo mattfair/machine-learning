@@ -1,12 +1,10 @@
 import numpy as np
-from agents import DDQNAgent
 from util import plot_learning_curve
 import os
 
-def run(env, agent):
+def run(env, agent, n_games=500):
     best_score = -np.inf
     load_checkpoint = False
-    n_games = 500
 
     models_dir = 'models/'
     plots_dir = 'plots/'
