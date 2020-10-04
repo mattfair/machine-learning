@@ -1,5 +1,6 @@
 import argparse, os
 import gym
+from gym import wrappers
 import numpy as np
 import agents as Agents
 from utils import plot_learning_curve, make_atari_env
@@ -46,6 +47,8 @@ if __name__ == '__main__':
                         help='Max number of no ops for testing')
     parser.add_argument('-fire_first', type=bool, default=False,
                         help='Set first action of episode to fire')
+    parser.add_argument('-render_video', type=bool, default=False,
+                        help='Render video of model')
     args = parser.parse_args()
 
     os.environ['CUDA_DEVICE_ORDER'] = 'PCI_BUS_ID'
@@ -73,6 +76,11 @@ if __name__ == '__main__':
 
     if args.load_checkpoint:
         agent.load_models()
+
+    if args.render_video:
+        env = wrappers.Monitor(env, 'tmp/video',
+                               video_callable=lambda episode_id: True,
+                               force=True)
 
     fname = args.algo + '_' + args.env + '_alpha' + str(args.lr) +'_' \
             + str(args.n_games) + 'games'

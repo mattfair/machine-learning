@@ -132,7 +132,7 @@ class DDQNAgent(Agent):
         return action
 
     def learn(self):
-        if self.memory.mem_cntr < self.batch_size:
+        if self.memory.mem_counter < self.batch_size:
             return
 
         self.q_eval.optimizer.zero_grad()
@@ -182,7 +182,7 @@ class DuelingDQNAgent(Agent):
         return action
 
     def learn(self):
-        if self.memory.mem_cntr < self.batch_size:
+        if self.memory.mem_counter < self.batch_size:
             return
 
         self.q_eval.optimizer.zero_grad()
@@ -234,7 +234,7 @@ class DuelingDDQNAgent(Agent):
         return action
 
     def learn(self):
-        if self.memory.mem_cntr < self.batch_size:
+        if self.memory.mem_counter < self.batch_size:
             return
 
         self.q_eval.optimizer.zero_grad()
