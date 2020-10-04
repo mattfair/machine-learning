@@ -1,0 +1,4 @@
+plots
+models
+*.pyc
+__pycache__
