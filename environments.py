@@ -1,4 +1,5 @@
 from gym.envs.registration import register
+from gym.utils import seeding
 from gym import spaces
 from market import generate_market_data
 from wrapper import RepeatActionAndMaxFrame, PreprocessFrame, StackFrames, PreprocessMarketData 
@@ -26,6 +27,11 @@ class OHLCStopLossEnv(gym.Env):
         self.window_size = 30
         self.current_index = self.window_size-1
         self.max_index = 200 + self.window_size
+        self._seed()
+
+    def _seed(self, seed=None):
+        self.np_random, seed = seeding.np_random(seed)
+        return [seed]
 
     def step(self, action):
         done = False
@@ -96,12 +102,11 @@ class OHLCStopLossEnv(gym.Env):
 
 register(
     id='OHLCStopLossEnv-v0',
-    entry_point=f'{__name__}:OHLCStopLossEnv',
-    max_episode_steps=100,
+    entry_point='environments:OHLCStopLossEnv',
+    max_episode_steps=200,
     reward_threshold=0.0,
     # kwargs={'data': change}
 )
-
 
 def make_atari_env(env_name, shape=(84, 84, 1), repeat=4, clip_rewards=False, no_ops=0, fire_first=False):
     env = gym.make(env_name)
