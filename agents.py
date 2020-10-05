@@ -3,6 +3,7 @@ import torch as T
 from deep_q_network import DeepQNetwork, DuelingDeepQNetwork
 from memory import ReplayBuffer
 
+
 class Agent():
     def __init__(self, gamma, epsilon, lr, n_actions, input_dims,
                  mem_size, batch_size, eps_min=0.01, eps_dec=5e-7,
@@ -35,11 +36,10 @@ class Agent():
             self.q_next.load_state_dict(self.q_eval.state_dict())
 
     def decrement_epsilon(self):
-        self.epsilon = self.epsilon - self.eps_dec \
-                           if self.epsilon > self.eps_min else self.eps_min
+        self.epsilon = self.epsilon - self.eps_dec if self.epsilon > self.eps_min else self.eps_min
+
     def sample_memory(self):
-        state, action, reward, new_state, done = \
-                                self.memory.sample_buffer(self.batch_size)
+        state, action, reward, new_state, done = self.memory.sample_buffer(self.batch_size)
 
         states = T.tensor(state).to(self.q_eval.device)
         rewards = T.tensor(reward).to(self.q_eval.device)
@@ -60,18 +60,19 @@ class Agent():
         self.q_eval.load_checkpoint()
         self.q_next.load_checkpoint()
 
+
 class DQNAgent(Agent):
     def __init__(self, *args, **kwargs):
         super(DQNAgent, self).__init__(*args, **kwargs)
 
         self.q_eval = DeepQNetwork(self.lr, self.n_actions,
-                                    input_dims=self.input_dims,
-                                    name=self.env_name+'_'+self.algo+'_q_eval',
-                                    chkpt_dir=self.chkpt_dir)
+                                   input_dims=self.input_dims,
+                                   name=self.env_name+'_'+self.algo+'_q_eval',
+                                   chkpt_dir=self.chkpt_dir)
         self.q_next = DeepQNetwork(self.lr, self.n_actions,
-                                    input_dims=self.input_dims,
-                                    name=self.env_name+'_'+self.algo+'_q_next',
-                                    chkpt_dir=self.chkpt_dir)
+                                   input_dims=self.input_dims,
+                                   name=self.env_name+'_'+self.algo+'_q_next',
+                                   chkpt_dir=self.chkpt_dir)
 
     def choose_action(self, observation):
         if np.random.random() > self.epsilon:
@@ -108,22 +109,24 @@ class DQNAgent(Agent):
 
         self.decrement_epsilon()
 
+
 class DDQNAgent(Agent):
     def __init__(self, *args, **kwargs):
         super(DDQNAgent, self).__init__(*args, **kwargs)
 
         self.q_eval = DeepQNetwork(self.lr, self.n_actions,
-                                    input_dims=self.input_dims,
-                                    name=self.env_name+'_'+self.algo+'_q_eval',
-                                    chkpt_dir=self.chkpt_dir)
+                                   input_dims=self.input_dims,
+                                   name=self.env_name+'_'+self.algo+'_q_eval',
+                                   chkpt_dir=self.chkpt_dir)
         self.q_next = DeepQNetwork(self.lr, self.n_actions,
-                                    input_dims=self.input_dims,
-                                    name=self.env_name+'_'+self.algo+'_q_next',
-                                    chkpt_dir=self.chkpt_dir)
+                                   input_dims=self.input_dims,
+                                   name=self.env_name+'_'+self.algo+'_q_next',
+                                   chkpt_dir=self.chkpt_dir)
 
     def choose_action(self, observation):
         if np.random.random() > self.epsilon:
-            state = T.tensor([observation],dtype=T.float).to(self.q_eval.device)
+            state = T.tensor([observation], dtype=T.float).to(
+                self.q_eval.device)
             actions = self.q_eval.forward(state)
             action = T.argmax(actions).item()
         else:
@@ -158,22 +161,24 @@ class DDQNAgent(Agent):
 
         self.decrement_epsilon()
 
+
 class DuelingDQNAgent(Agent):
     def __init__(self, *args, **kwargs):
         super(DuelingDQNAgent, self).__init__(*args, **kwargs)
 
         self.q_eval = DuelingDeepQNetwork(self.lr, self.n_actions,
-                        input_dims=self.input_dims,
-                        name=self.env_name+'_'+self.algo+'_q_eval',
-                        chkpt_dir=self.chkpt_dir)
+                                          input_dims=self.input_dims,
+                                          name=self.env_name+'_'+self.algo+'_q_eval',
+                                          chkpt_dir=self.chkpt_dir)
         self.q_next = DuelingDeepQNetwork(self.lr, self.n_actions,
-                        input_dims=self.input_dims,
-                        name=self.env_name+'_'+self.algo+'_q_next',
-                        chkpt_dir=self.chkpt_dir)
+                                          input_dims=self.input_dims,
+                                          name=self.env_name+'_'+self.algo+'_q_next',
+                                          chkpt_dir=self.chkpt_dir)
 
     def choose_action(self, observation):
         if np.random.random() > self.epsilon:
-            state = T.tensor([observation],dtype=T.float).to(self.q_eval.device)
+            state = T.tensor([observation], dtype=T.float).to(
+                self.q_eval.device)
             _, advantage = self.q_eval.forward(state)
             action = T.argmax(advantage).item()
         else:
@@ -196,9 +201,9 @@ class DuelingDQNAgent(Agent):
         V_s_, A_s_ = self.q_next.forward(states_)
 
         q_pred = T.add(V_s,
-                        (A_s - A_s.mean(dim=1, keepdim=True)))[indices, actions]
+                       (A_s - A_s.mean(dim=1, keepdim=True)))[indices, actions]
         q_next = T.add(V_s_,
-                        (A_s_ - A_s_.mean(dim=1, keepdim=True))).max(dim=1)[0]
+                       (A_s_ - A_s_.mean(dim=1, keepdim=True))).max(dim=1)[0]
 
         q_next[dones] = 0.0
         q_target = rewards + self.gamma*q_next
@@ -210,22 +215,23 @@ class DuelingDQNAgent(Agent):
         self.learn_step_counter += 1
         self.decrement_epsilon()
 
+
 class DuelingDDQNAgent(Agent):
     def __init__(self, *args, **kwargs):
         super(DuelingDDQNAgent, self).__init__(*args, **kwargs)
 
         self.q_eval = DuelingDeepQNetwork(self.lr, self.n_actions,
-                        input_dims=self.input_dims,
-                        name=self.env_name+'_'+self.algo+'_q_eval',
-                        chkpt_dir=self.chkpt_dir)
+                                          input_dims=self.input_dims,
+                                          name=self.env_name+'_'+self.algo+'_q_eval',
+                                          chkpt_dir=self.chkpt_dir)
         self.q_next = DuelingDeepQNetwork(self.lr, self.n_actions,
-                        input_dims=self.input_dims,
-                        name=self.env_name+'_'+self.algo+'_q_next',
-                        chkpt_dir=self.chkpt_dir)
+                                          input_dims=self.input_dims,
+                                          name=self.env_name+'_'+self.algo+'_q_next',
+                                          chkpt_dir=self.chkpt_dir)
 
     def choose_action(self, observation):
         if np.random.random() > self.epsilon:
-            state = T.tensor([observation],dtype=T.float).to(self.q_eval.device)
+            state = T.tensor([observation], dtype=T.float).to(self.q_eval.device)
             _, advantage = self.q_eval.forward(state)
             action = T.argmax(advantage).item()
         else:
@@ -250,12 +256,9 @@ class DuelingDDQNAgent(Agent):
 
         V_s_eval, A_s_eval = self.q_eval.forward(states_)
 
-        q_pred = T.add(V_s,
-                        (A_s - A_s.mean(dim=1, keepdim=True)))[indices, actions]
+        q_pred = T.add(V_s, (A_s - A_s.mean(dim=1, keepdim=True)))[indices, actions]
         q_next = T.add(V_s_, (A_s_ - A_s_.mean(dim=1, keepdim=True)))
-
-        q_eval = T.add(V_s_eval,
-                      (A_s_eval - A_s_eval.mean(dim=1, keepdim=True)))
+        q_eval = T.add(V_s_eval, (A_s_eval - A_s_eval.mean(dim=1, keepdim=True)))
 
         max_actions = T.argmax(q_eval, dim=1)
         q_next[dones] = 0.0

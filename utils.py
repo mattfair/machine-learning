@@ -2,8 +2,6 @@ import matplotlib as mpl
 mpl.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
-from wrapper import RepeatActionAndMaxFrame, PreprocessFrame, StackFrames
-import gym
 
 def plot_learning_curve(x, scores, epsilons, filename):
     fig = plt.figure()
@@ -29,12 +27,3 @@ def plot_learning_curve(x, scores, epsilons, filename):
     ax2.tick_params(axis='y', colors="C1")
 
     plt.savefig(filename)
-
-def make_atari_env(env_name, shape=(84,84,1), repeat=4, clip_rewards=False, no_ops=0, fire_first=False):
-    env = gym.make(env_name)
-    env = RepeatActionAndMaxFrame(env, repeat, clip_rewards, no_ops, fire_first)
-    env = PreprocessFrame(shape, env)
-    env = StackFrames(env, repeat)
-
-    return env
-

@@ -1,8 +1,10 @@
 import gym
 from gym.spaces import Box
 import numpy as np
+import pandas as pd
 from collections import deque
 import cv2
+from market import normalize_ohlc
 
 class RepeatActionAndMaxFrame(gym.Wrapper):
     def __init__(self, env=None, repeat=4, clip_reward=False, no_ops=False, fire_first=False):
@@ -86,3 +88,21 @@ class StackFrames(gym.ObservationWrapper):
     def observation(self, obs):
         self.stack.append(obs)
         return np.array(self.stack).reshape(self.observation_space.low.shape)
+
+class PreprocessMarketData(gym.ObservationWrapper):
+    def __init__(self, shape, env):
+        super(PreprocessMarketData, self).__init__(env)
+        self.shape = (shape[2], shape[0], shape[1])
+        self.observation_space = Box(low=0.0, high=1.0, shape=self.shape, dtype=np.float32)
+
+    def observation(self, obs):
+        df = pd.DataFrame({'open':obs[0], 'high':obs[1], 'low': obs[2], 'close': obs[3]})
+        norm = normalize_ohlc(df).values
+        resized_screen = cv2.resize(norm, self.shape[1:], interpolation=cv2.INTER_CUBIC)
+        resized_screen /= resized_screen.max()
+        new_obs=np.array(resized_screen, dtype=np.uint8).reshape(self.shape)
+        #cv2.namedWindow('image', cv2.WINDOW_NORMAL)
+        #cv2.imshow('image',resized_screen)
+        #cv2.waitKey(0)
+        #cv2.destroyAllWindows()
+        return new_obs
