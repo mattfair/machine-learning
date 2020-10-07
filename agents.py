@@ -76,7 +76,7 @@ class DQNAgent(Agent):
 
     def choose_action(self, observation):
         if np.random.random() > self.epsilon:
-            state = T.tensor([observation],dtype=T.float).to(self.q_eval.device)
+            state = T.tensor([observation], dtype=T.float).to(self.q_eval.device)
             actions = self.q_eval.forward(state)
             action = T.argmax(actions).item()
         else:
@@ -86,6 +86,8 @@ class DQNAgent(Agent):
 
     def learn(self):
         if self.memory.mem_counter < self.batch_size:
+            print('skip learning, mem counter', self.memory.mem_counter,
+                  'less than batch size', self.batch_size)
             return
 
         self.q_eval.optimizer.zero_grad()
@@ -136,6 +138,8 @@ class DDQNAgent(Agent):
 
     def learn(self):
         if self.memory.mem_counter < self.batch_size:
+            print('skip learning, mem counter', self.memory.mem_counter,
+                  'less than batch size', self.batch_size)
             return
 
         self.q_eval.optimizer.zero_grad()
@@ -188,6 +192,8 @@ class DuelingDQNAgent(Agent):
 
     def learn(self):
         if self.memory.mem_counter < self.batch_size:
+            print('skip learning, mem counter', self.memory.mem_counter,
+                  'less than batch size', self.batch_size)
             return
 
         self.q_eval.optimizer.zero_grad()
@@ -241,6 +247,8 @@ class DuelingDDQNAgent(Agent):
 
     def learn(self):
         if self.memory.mem_counter < self.batch_size:
+            print('skip learning, mem counter', self.memory.mem_counter,
+                  'less than batch size', self.batch_size)
             return
 
         self.q_eval.optimizer.zero_grad()

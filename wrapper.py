@@ -6,6 +6,7 @@ from collections import deque
 import cv2
 from market import normalize_ohlc
 
+
 class RepeatActionAndMaxFrame(gym.Wrapper):
     def __init__(self, env=None, repeat=4, clip_reward=False, no_ops=False, fire_first=False):
         super(RepeatActionAndMaxFrame, self).__init__(env)
@@ -28,7 +29,7 @@ class RepeatActionAndMaxFrame(gym.Wrapper):
             total_reward += reward
 
             idx = i % 2
-            self.frame_buffer[idx]=obs
+            self.frame_buffer[idx] = obs
 
             if done:
                 break
@@ -52,8 +53,9 @@ class RepeatActionAndMaxFrame(gym.Wrapper):
             obs, _, _, _ = self.env.step(1)
 
         self.frame_buffer = np.zeros_like((2, self.shape))
-        self.frame_buffer[0]=observation
+        self.frame_buffer[0] = observation
         return observation
+
 
 class PreprocessFrame(gym.ObservationWrapper):
     def __init__(self, shape, env):
@@ -63,11 +65,12 @@ class PreprocessFrame(gym.ObservationWrapper):
         self.observation_space = Box(low=0.0, high=1.0, shape=self.shape, dtype=np.float32)
 
     def observation(self, obs):
-        img_gray=cv2.cvtColor(obs, cv2.COLOR_RGB2GRAY)
+        img_gray = cv2.cvtColor(obs, cv2.COLOR_RGB2GRAY)
         resized_screen = cv2.resize(img_gray, self.shape[1:], interpolation=cv2.INTER_AREA)
-        new_obs=np.array(resized_screen, dtype=np.uint8).reshape(self.shape)
+        new_obs = np.array(resized_screen, dtype=np.uint8).reshape(self.shape)
         new_obs = new_obs / 255
         return new_obs
+
 
 class StackFrames(gym.ObservationWrapper):
     def __init__(self, env, repeat):
@@ -89,6 +92,7 @@ class StackFrames(gym.ObservationWrapper):
         self.stack.append(obs)
         return np.array(self.stack).reshape(self.observation_space.low.shape)
 
+
 class PreprocessMarketData(gym.ObservationWrapper):
     def __init__(self, shape, env):
         super(PreprocessMarketData, self).__init__(env)
@@ -96,13 +100,36 @@ class PreprocessMarketData(gym.ObservationWrapper):
         self.observation_space = Box(low=0.0, high=1.0, shape=self.shape, dtype=np.float32)
 
     def observation(self, obs):
-        df = pd.DataFrame({'open':obs[0], 'high':obs[1], 'low': obs[2], 'close': obs[3]})
+        df = pd.DataFrame({'open': obs[0], 'high': obs[1], 'low': obs[2], 'close': obs[3]})
         norm = normalize_ohlc(df).values
         resized_screen = cv2.resize(norm, self.shape[1:], interpolation=cv2.INTER_CUBIC)
         resized_screen /= resized_screen.max()
-        new_obs=np.array(resized_screen, dtype=np.uint8).reshape(self.shape)
+        new_obs = np.array(resized_screen, dtype=np.uint8).reshape(self.shape)
         #cv2.namedWindow('image', cv2.WINDOW_NORMAL)
-        #cv2.imshow('image',resized_screen)
-        #cv2.waitKey(0)
-        #cv2.destroyAllWindows()
+        # cv2.imshow('image',resized_screen)
+        # cv2.waitKey(0)
+        # cv2.destroyAllWindows()
         return new_obs
+
+
+class NormalizeReward(gym.Wrapper):
+    def __init__(self, env=None, clip_reward=False):
+        super(NormalizeReward, self).__init__(env)
+        self.clip_reward = clip_reward
+
+    def step(self, action):
+        obs, reward, done, info = self.env.step(action)
+
+        if self.clip_reward:
+            reward = np.clip(np.array([reward]), 0, 1)[0]
+        else:
+            min = np.min(obs)
+            max = np.max(obs)
+            diff = max-min
+            reward = (reward - min)/diff if diff != 0 else 0
+
+        return obs, reward, done, info
+
+    def reset(self):
+        observation = self.env.reset()
+        return observation
