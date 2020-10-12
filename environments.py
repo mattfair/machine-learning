@@ -42,25 +42,46 @@ class OHLCStopLossEnv(gym.Env):
 
     def step(self, action):
         done = False
+        reward = 0
         self.current_index += 1
         self.action = action
+        self.in_position |= action != 0
 
-        try:
-            currentBar = self.history.iloc[self.current_index]
-            prevBar = self.history.iloc[self.current_index - 1]
-        except IndexError as e:
-            print('trying to index into history at index ',
-                  self.current_index, ' history has size', len(self.history))
-            print(e)
+        currentBar = self.history.iloc[self.current_index]
+        prevBar = self.history.iloc[self.current_index - 1]
 
-        reward = prevBar.close - currentBar.close
-
-        if prevBar.stop_loss > currentBar.low or action == 0:
-            # need to be able to use normalized values for stop
-            reward = prevBar.close - prevBar.stop_loss
+        if not self.in_position:
+            # shouldn't take the trade, end with no reward
             done = True
+            self.exit_reason = 'Exit, not in position'
+        elif self.entry_price is None:
+            # entering into a new position, setting stop loss
+            self.entry_price = self.history.iloc[self.current_index].open
+            #print('entry_price: {} close: {}'.format(self.entry_price,
+            #                                         self.history.iloc[self.current_index].close))
+            self.history.stop_loss[self.current_index] = self.history.iloc[self.current_index - self.window_size:self.current_index].low.min()
+            reward =  self.history.iloc[self.current_index].close - self.entry_price
         else:
-            self.history.stop_loss[self.current_index] = self.history.iloc[self.current_index-action+1].low
+            # Have been in a position more than one bar
+            if prevBar.stop_loss > currentBar.low:
+                # stop loss was hit, exit at stop loss value
+                reward = prevBar.stop_loss - prevBar.close
+                #print('open: {} close: {} reward: {}'.format(self.history.iloc[self.current_index].open,
+                #                                             self.history.iloc[self.current_index].close,
+                #                                             reward))
+                self.exit_reason = 'Stop loss hit {} > {}'.format(prevBar.stop_loss, currentBar.low)
+                #print(self.exit_reason)
+
+                #total_reward = prevBar.stop_loss-self.entry_price
+                #print('total reward', total_reward)
+
+                done = True
+            else:
+                reward = currentBar.close - prevBar.close
+                #print('open: {} close: {} reward: {} ({}-{})'.format(self.history.iloc[self.current_index].open,
+                #                                             self.history.iloc[self.current_index].close,
+                #                                             reward, prevBar.close, currentBar.close))
+                self.history.stop_loss[self.current_index] = self.history.iloc[self.current_index - action:self.current_index].low.min()
 
         start = self.current_index-self.window_size
         end = self.current_index
@@ -75,16 +96,18 @@ class OHLCStopLossEnv(gym.Env):
         self.history = generate_market_data(200, '1/1/2020')
         self.history['stop_loss'] = np.nan
         self.current_index = self.window_size-1
+        self.in_position = False
+        self.exit_reason = ''
+        self.entry_price = None
 
         # intialize to 4 day low
-        self.history.stop_loss[self.current_index] = self.history.low[self.current_index -
-                                                                      4:self.current_index].min()
+        #self.history.stop_loss[self.current_index] = self.history.iloc[self.current_index - 4:self.current_index].low.min()
 
         return np.transpose(self.history[['open', 'high', 'low', 'close']][:self.window_size].values)
 
     def _get_image(self):
-        current = self.history.iloc[:self.current_index]
-        stop_loss = self.history.iloc[:self.current_index]['stop_loss']
+        current = self.history.iloc[:self.current_index+1]
+        stop_loss = self.history.iloc[:self.current_index+1].stop_loss
         kwargs = dict(type='candle', volume=False, figscale=2)
 
         if len(stop_loss.dropna()):
@@ -96,8 +119,8 @@ class OHLCStopLossEnv(gym.Env):
             self.fig, axes = mpf.plot(current, **kwargs, style='charles', returnfig=True)
             self.ax = axes[0]
 
-        self.ax.set_title('index={} window size={} action={}'.format(
-            self.current_index, self.window_size, self.action))
+        self.ax.set_title('index={} window size={} action={}\n{}'.format(
+            self.current_index, self.window_size, self.action, self.exit_reason))
         self.fig.canvas.draw()
 
         return cv2.cvtColor(np.array(self.fig.canvas.buffer_rgba()), cv2.COLOR_RGBA2RGB)

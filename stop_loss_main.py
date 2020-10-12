@@ -34,6 +34,8 @@ if __name__ == '__main__':
                         help='GPU Number: 0, 1, 2, 3')
     parser.add_argument('-load_checkpoint', type=bool, default=False,
                         help='load model checkpoint')
+    parser.add_argument('-train_checkpoint', type=bool, default=False,
+                        help='train starting from model checkpoint')
     parser.add_argument('-path', type=str, default='models/',
                         help='path for model saving/loading')
     parser.add_argument('-algo', type=str, default='DuelingDDQNAgent',
@@ -65,7 +67,7 @@ if __name__ == '__main__':
                    algo=args.algo,
                    env_name=args.env)
 
-    if args.load_checkpoint:
+    if args.load_checkpoint or args.train_checkpoint:
         agent.load_models()
 
     if args.render_video:
@@ -73,7 +75,7 @@ if __name__ == '__main__':
         if not os.path.exists('tmp/video'):
             os.mkdirs('tmp/video')
         env = wrappers.Monitor(env, 'tmp/video',
-                               video_callable=lambda count: count % 100 == 0,
+                               video_callable=lambda count: count % 10 == 0,
                                force=True)
 
     fname = args.algo + '_' + args.env + '_alpha' + str(args.lr) + '_' + str(args.n_games) + 'games'
@@ -113,15 +115,15 @@ if __name__ == '__main__':
         if len(scores) > 25:
             avg_score = np.mean(scores[-100:])
             print('episode: ', i, 'score: ', score,
-                  ' average score %.1f' % avg_score, 'best score %.2f' % best_score,
-                  'epsilon %.6f' % agent.epsilon, 'game steps', n_game_steps, 'steps', n_steps)
+                  ' average score %.4f' % avg_score, 'best score %.4f' % best_score,
+                  'epsilon %.4f' % agent.epsilon, 'game steps', n_game_steps, 'steps', n_steps)
 
             if avg_score > best_score:
                 if not args.load_checkpoint:
                     agent.save_models()
                 best_score = avg_score
         else:
-            print('episode: ', i, 'score: ', score, ' average score ** best score ** epsilon %.6f' %
+            print('episode: ', i, 'score: ', score, ' average score ** best score ** epsilon %.4f' %
                   agent.epsilon, 'game steps', n_game_steps, 'steps', n_steps)
 
         eps_history.append(agent.epsilon)

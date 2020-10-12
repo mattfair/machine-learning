@@ -19,7 +19,7 @@ def plot_learning_curve(x, scores, epsilons, filename):
     for t in range(N):
         running_avg[t] = np.mean(scores[max(0, t-100):(t+1)])
 
-    ax2.scatter(x, running_avg, color="C1")
+    ax2.scatter(x, running_avg, color="C1", s=1)
     ax2.axes.get_xaxis().set_visible(False)
     ax2.yaxis.tick_right()
     ax2.set_ylabel('Score', color="C1")

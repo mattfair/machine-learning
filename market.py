@@ -49,7 +49,7 @@ def ohlc(values):
     return (o, h, l, c)
 
 def generate_market_data(N, startDate):
-    so = np.random.uniform(-1000, 10000)
+    so = np.random.uniform(0.0, 1.0)
     mu = np.random.uniform(0.0, 0.15)
     sigma = np.random.uniform(0.0, 1.0)
     T = 1.

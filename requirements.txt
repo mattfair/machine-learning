@@ -1,6 +1,8 @@
 numpy
+pandas
 matplotlib
 gym
 opencv-python
 atari_py
 torch
+mplfinance

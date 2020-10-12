@@ -102,7 +102,7 @@ class PreprocessMarketData(gym.ObservationWrapper):
     def observation(self, obs):
         df = pd.DataFrame({'open': obs[0], 'high': obs[1], 'low': obs[2], 'close': obs[3]})
         norm = normalize_ohlc(df).values
-        resized_screen = cv2.resize(norm, self.shape[1:], interpolation=cv2.INTER_CUBIC)
+        resized_screen = cv2.resize(norm, self.shape[1:], interpolation=cv2.INTER_LANCZOS4)
         resized_screen /= resized_screen.max()
         new_obs = np.array(resized_screen, dtype=np.uint8).reshape(self.shape)
         #cv2.namedWindow('image', cv2.WINDOW_NORMAL)
@@ -113,16 +113,17 @@ class PreprocessMarketData(gym.ObservationWrapper):
 
 
 class NormalizeReward(gym.Wrapper):
-    def __init__(self, env=None, clip_reward=False):
+    def __init__(self, env=None, clip_reward=False, normalize_reward=False):
         super(NormalizeReward, self).__init__(env)
         self.clip_reward = clip_reward
+        self.normalize_reward = normalize_reward
 
     def step(self, action):
         obs, reward, done, info = self.env.step(action)
 
         if self.clip_reward:
             reward = np.clip(np.array([reward]), 0, 1)[0]
-        else:
+        elif self.normalize_reward:
             min = np.min(obs)
             max = np.max(obs)
             diff = max-min
